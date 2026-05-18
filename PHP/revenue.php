@@ -274,41 +274,41 @@ table td{
 
     <li>
       <a href="admin.php">
-        <span class="nav-icon">⊞</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Dashboard</span>
       </a>
     </li>
 
     <li class="active">
       <a href="revenue.php">
-        <span class="nav-icon">₱</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Revenue</span>
       </a>
     </li>
 
     <li>
       <a href="calendar.php">
-        <span class="nav-icon">◫</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Calendar</span>
       </a>
     </li>
 
     <li>
       <a href="customer.php">
-        <span class="nav-icon">◎</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Customers</span>
       </a>
     </li>
 
     <li>
   <a href="payment_admin.php">
-    <span class="nav-icon">📲</span>
+    <span class="nav-icon"></span>
     <span class="nav-label">Payments</span></a>
   </li>
 
     <li>
       <a href="report.php">
-        <span class="nav-icon">▤</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Reports</span>
       </a>
     </li>
@@ -335,7 +335,6 @@ table td{
 
     <nav>
 
-        <a href="main.html">Home</a>
 
         <a href="logout.php"
         class="btn logout">
@@ -420,78 +419,38 @@ table td{
 
     <!-- TABLE -->
 
-    <div class="revenue-table">
+    <!-- TABLE -->
+<div class="revenue-table">
 
-        <h2>Recent Transactions</h2>
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>#</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>Payment Method</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Status</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-            <?php
-
-            $count = 1;
-
-            while($row = mysqli_fetch_assoc($paymentsQuery)){
-
-            ?>
-
-            <tr>
-
-                <td><?php echo $count++; ?></td>
-
-                <td><?php echo $row['name']; ?></td>
-
-                <td><?php echo $row['occasion']; ?></td>
-
-                <td><?php echo $row['payment_method']; ?></td>
-
-                <td>
-                    ₱<?php echo number_format($row['amount']); ?>
-                </td>
-
-                <td>
-                    <?php
-                    echo date(
-                        "M d, Y",
-                        strtotime($row['booking_datetime'])
-                    );
-                    ?>
-                </td>
-
-                <td>
-
-                    <span class="status-paid">
-                        Paid
-                    </span>
-
-                </td>
-
-            </tr>
-
-            <?php } ?>
-
-            </tbody>
-
-        </table>
-
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:12px;">
+        <h2 style="margin:0;">Recent Transactions</h2>
+        <div style="position:relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:14px;">⌕</span>
+            <input
+                type="text"
+                id="searchTransactions"
+                placeholder="Search customer…"
+                style="padding:9px 14px 9px 32px; border:1px solid #e0e0e0; border-radius:10px; font-size:0.875rem; outline:none; width:220px; font-family:inherit;"
+            >
+        </div>
     </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Service</th>
+                <th>Payment Method</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="transactionTableBody"></tbody>
+    </table>
+
+</div>
 
 </section>
 
@@ -501,75 +460,106 @@ table td{
      CHART JS
 ========================= -->
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 
-const completedRevenue =
-<?php echo $completedRevenue; ?>;
+// ── PIE CHART ──────────────────────────────────
+const completedRevenue  = <?php echo $completedRevenue; ?>;
+const pendingRevenue    = <?php echo $pendingRevenue; ?>;
+const approvedRevenue   = <?php echo $approvedRevenue; ?>;
+const cancelledRevenue  = <?php echo $cancelledRevenue; ?>;
 
-const pendingRevenue =
-<?php echo $pendingRevenue; ?>;
-
-const approvedRevenue =
-<?php echo $approvedRevenue; ?>;
-
-const cancelledRevenue =
-<?php echo $cancelledRevenue; ?>;
-
-const ctx =
-document.getElementById("revenueChart");
-
+const ctx = document.getElementById("revenueChart");
 new Chart(ctx, {
-
     type: "pie",
-
     data: {
-
-        labels: [
-            "Completed",
-            "Pending",
-            "Approved",
-            "Cancelled"
-        ],
-
+        labels: ["Completed","Pending","Approved","Cancelled"],
         datasets: [{
-
-            data: [
-                completedRevenue,
-                pendingRevenue,
-                approvedRevenue,
-                cancelledRevenue
-            ],
-
-            backgroundColor: [
-                "#4caf50",
-                "#ff9800",
-                "#2196f3",
-                "#f44336"
-            ],
-
-            borderWidth:0
-
+            data: [completedRevenue, pendingRevenue, approvedRevenue, cancelledRevenue],
+            backgroundColor: ["#4caf50","#ff9800","#2196f3","#f44336"],
+            borderWidth: 0
         }]
-
     },
-
     options: {
-
-        responsive:true,
-
-        plugins: {
-
-            legend: {
-                position:"bottom"
-            }
-
-        }
-
+        responsive: true,
+        plugins: { legend: { position: "bottom" } }
     }
-
 });
 
-</script>
+// ── TRANSACTIONS TABLE ─────────────────────────
+const allTransactions = [
+    <?php
+    // Re-run query to get all rows as JSON
+    $allPayments = mysqli_query($conn,"
+        SELECT name, occasion, payment_method, amount, booking_datetime
+        FROM bookings
+        WHERE status='Completed'
+        ORDER BY booking_datetime DESC
+    ");
+    $rows = [];
+    while($r = mysqli_fetch_assoc($allPayments)){
+        $rows[] = json_encode([
+            'name'           => $r['name'],
+            'occasion'       => $r['occasion'],
+            'payment_method' => $r['payment_method'],
+            'amount'         => $r['amount'],
+            'date'           => date("M d, Y", strtotime($r['booking_datetime']))
+        ]);
+    }
+    echo implode(",\n    ", $rows);
+    ?>
+];
 
+function renderTransactions() {
+    const tbody      = document.getElementById("transactionTableBody");
+    const search     = document.getElementById("searchTransactions").value.toLowerCase().trim();
+    const isSearching = search !== "";
+
+    tbody.innerHTML = "";
+
+    let displayCount = 0;
+    let rowNumber    = 0;
+
+    allTransactions.forEach((t) => {
+        if (!t.name.toLowerCase().includes(search)) return;
+
+        rowNumber++;
+
+        // Limit to 10 only when NOT searching
+        if (!isSearching && displayCount >= 10) return;
+
+        displayCount++;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${rowNumber}</td>
+            <td>${t.name}</td>
+            <td>${t.occasion}</td>
+            <td>${t.payment_method}</td>
+            <td>₱${Number(t.amount).toLocaleString()}</td>
+            <td>${t.date}</td>
+            <td><span class="status-paid">Paid</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if (displayCount === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center;padding:24px;color:#aaa;">
+                    No transactions found.
+                </td>
+            </tr>`;
+    }
+}
+
+// Search listener
+document.getElementById("searchTransactions").addEventListener("input", renderTransactions);
+
+// Initial render
+renderTransactions();
+
+</script>
 </body>
 </html>

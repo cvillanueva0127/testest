@@ -82,18 +82,15 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["success" => false, "message" => "Invalid ID."]);
         exit();
     }
-    try {
-        $pdo->prepare("
-            UPDATE bookings SET payment_status = 'Confirmed'
-            WHERE id = ? AND payment_method = 'GCash'
-        ")->execute([$id]);
+   try {
+    $pdo->prepare("
+        UPDATE bookings 
+        SET payment_status = 'Confirmed',
+            status = 'Completed'
+        WHERE id = ? AND payment_method = 'GCash'
+    ")->execute([$id]);
 
-        $pdo->prepare("
-            UPDATE bookings SET status = 'Approved'
-            WHERE id = ? AND status = 'Pending'
-        ")->execute([$id]);
-
-        echo json_encode(["success" => true, "message" => "Payment confirmed."]);
+    echo json_encode(["success" => true, "message" => "Payment confirmed."]);
     } catch (PDOException $e) {
         echo json_encode(["success" => false, "message" => $e->getMessage()]);
     }
@@ -356,12 +353,12 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Cubiertos</h2>
   </div>
   <ul class="sidebar-menu">
-    <li><a href="admin.php"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a></li>
-    <li><a href="revenue.php"><span class="nav-icon">₱</span><span class="nav-label">Revenue</span></a></li>
-    <li><a href="calendar.php"><span class="nav-icon">◫</span><span class="nav-label">Calendar</span></a></li>
-    <li><a href="customer.php"><span class="nav-icon">◎</span><span class="nav-label">Customers</span></a></li>
-    <li class="active"><a href="payment_admin.php"><span class="nav-icon">📲</span><span class="nav-label">Payments</span></a></li>
-    <li><a href="report.php"><span class="nav-icon">▤</span><span class="nav-label">Reports</span></a></li>
+    <li><a href="admin.php"><span class="nav-icon"></span><span class="nav-label">Dashboard</span></a></li>
+    <li><a href="revenue.php"><span class="nav-icon"></span><span class="nav-label">Revenue</span></a></li>
+    <li><a href="calendar.php"><span class="nav-icon"></span><span class="nav-label">Calendar</span></a></li>
+    <li><a href="customer.php"><span class="nav-icon"></span><span class="nav-label">Customers</span></a></li>
+    <li class="active"><a href="payment_admin.php"><span class="nav-icon"></span><span class="nav-label">Payments</span></a></li>
+    <li><a href="report.php"><span class="nav-icon"></span><span class="nav-label">Reports</span></a></li>
   </ul>
   <div class="sidebar-footer">
     <p>Cubiertos Food Hub &copy; 2025</p>
@@ -373,7 +370,6 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1><span>GCash</span> Payment Verification</h1>
   </div>
   <nav>
-    <a href="admin.php">Dashboard</a>
     <a href="logout.php" class="btn logout">Logout</a>
   </nav>
 </header>
@@ -382,21 +378,21 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="pay-stats-row">
     <div class="pay-stat-card">
-      <div class="pay-stat-icon">⏳</div>
+      <div class="pay-stat-icon"></div>
       <div class="pay-stat-info">
         <span id="stat_pending">0</span>
         <p>Pending GCash</p>
       </div>
     </div>
     <div class="pay-stat-card">
-      <div class="pay-stat-icon">✅</div>
+      <div class="pay-stat-icon"></div>
       <div class="pay-stat-info">
         <span id="stat_confirmed">0</span>
         <p>Confirmed Payments</p>
       </div>
     </div>
     <div class="pay-stat-card">
-      <div class="pay-stat-icon">💰</div>
+      <div class="pay-stat-icon"></div>
       <div class="pay-stat-info">
         <span id="stat_total">₱0</span>
         <p>Total GCash Revenue</p>
@@ -405,7 +401,7 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 
   <div class="pay-filter-bar">
-    <input type="text" id="paySearch" placeholder="🔍  Search by name or reference number…">
+    <input type="text" id="paySearch" placeholder="  Search by name or reference number…">
     <select id="payFilter">
       <option value="Pending">Pending Verification</option>
       <option value="Confirmed">Confirmed</option>
@@ -424,11 +420,11 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="proof-modal-box">
     <button class="proof-close-btn" onclick="closeModal()">✕</button>
     <h3 id="modalTitle">Payment Screenshot</h3>
-    <!-- ✅ FIX: onerror shows a fallback message instead of a broken image icon -->
+    <!--  FIX: onerror shows a fallback message instead of a broken image icon -->
     <img id="modalImg" src="" alt="Payment Proof"
          onerror="this.style.display='none'; document.getElementById('modalError').style.display='block';">
     <div id="modalError" class="proof-modal-error">
-      ⚠️ Image could not be loaded.<br>
+       Image could not be loaded.<br>
       <small>The file may have been deleted or the path is incorrect.</small>
     </div>
   </div>
@@ -525,7 +521,7 @@ function buildCard(p) {
     });
   };
 
-  // ✅ FIX: proof thumbnail with proper onerror fallback
+  //  FIX: proof thumbnail with proper onerror fallback
   let proofHTML;
   if (p.proof_path) {
     const safeSrc  = esc(p.proof_path);
@@ -539,7 +535,7 @@ function buildCard(p) {
              data-src="${safeSrc}"
              data-name="${safeName}"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="pay-no-proof" style="display:none;">⚠️ Image not found on server</div>
+        <div class="pay-no-proof" style="display:none;"> Image not found on server</div>
       </div>`;
   } else {
     proofHTML = `
@@ -664,7 +660,7 @@ async function confirmPayment(id) {
     });
     const data = await res.json();
     if (data.success) {
-      showToast("✅ Payment confirmed and booking approved!", "success");
+      showToast(" Payment confirmed and booking approved!", "success");
       fetchPayments();
     } else {
       showToast("❌ " + (data.message || "Failed to confirm."), "error");
@@ -712,6 +708,8 @@ function showToast(msg, type = "success") {
 // ── INIT ──────────────────────────────────────────────
 fetchPayments();
 autoRefreshId = setInterval(fetchPayments, 60000);
+
+
 
 </script>
 </body>

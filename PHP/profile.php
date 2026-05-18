@@ -324,10 +324,7 @@ $default_fullname = val($user['full_name'] ?: trim(($user['firstName'] ?? '') . 
                 </div>
             </div>
             <div class="nav-links">
-                <a href="homepage.php">Home</a>
-                <a href="about.php">About</a>
-                <a href="stores.php">Our Stores</a>
-                <a href="contacts.php">Contacts</a>
+                <a href="homepage.php">Back to booking</a>
                 <a href="logout.php" class="nav-logout">Logout</a>
             </div>
         </nav>
@@ -356,9 +353,9 @@ $default_fullname = val($user['full_name'] ?: trim(($user['firstName'] ?? '') . 
                 </form>
                 <div>
                     <div class="hero-name"><?= $display_first ?></div>
-                    <span class="hero-badge">🌱 New Customer</span>
+                    <span class="hero-badge"> New Customer</span>
                     <?php if ($is_birthday): ?>
-                        <span class="hero-badge" style="margin-left:6px;">🎂 Happy Birthday!</span>
+                        <span class="hero-badge" style="margin-left:6px;"> Happy Birthday!</span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -374,7 +371,7 @@ $default_fullname = val($user['full_name'] ?: trim(($user['firstName'] ?? '') . 
     </div>
 
     <?php if (isset($_GET['saved'])): ?>
-        <div class="toast" id="toast">✅ Profile saved successfully!</div>
+        <div class="toast" id="toast"> Profile saved successfully!</div>
     <?php endif; ?>
 
     <!-- CONTENT -->
@@ -440,7 +437,6 @@ $default_fullname = val($user['full_name'] ?: trim(($user['firstName'] ?? '') . 
                             <div class="field-value" id="v-bday"><?= !empty($bday_display) ? $bday_display : '<span class="empty">Not set</span>' ?></div>
                             <input class="field-input" id="i-bday" name="birthday" type="date" value="<?= val($bday_value) ?>" />
                             <?php if (!empty($bday_value)): ?>
-                                <div class="promo-tag">🎁 Birthday promo unlocked!</div>
                             <?php endif; ?>
                         </div>
                     </div>

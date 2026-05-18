@@ -26,16 +26,16 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
     <h2>Cubiertos</h2>
   </div>
   <ul class="sidebar-menu">
-    <li><a href="admin.php"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a></li>
-    <li><a href="Revenue.php"><span class="nav-icon">₱</span><span class="nav-label">Revenue</span></a></li>
-    <li class="active"><a href="calendar.php"><span class="nav-icon">◫</span><span class="nav-label">Calendar</span></a></li>
-    <li><a href="customer.php"><span class="nav-icon">◎</span><span class="nav-label">Customers</span></a></li>
+    <li><a href="admin.php"><span class="nav-icon"></span><span class="nav-label">Dashboard</span></a></li>
+    <li><a href="Revenue.php"><span class="nav-icon"></span><span class="nav-label">Revenue</span></a></li>
+    <li class="active"><a href="calendar.php"><span class="nav-icon"></span><span class="nav-label">Calendar</span></a></li>
+    <li><a href="customer.php"><span class="nav-icon"></span><span class="nav-label">Customers</span></a></li>
     <li>
   <a href="payment_admin.php">
-    <span class="nav-icon">📲</span>
+    <span class="nav-icon"></span>
     <span class="nav-label">Payments</span></a>
   </li>
-    <li><a href="report.php"><span class="nav-icon">▤</span><span class="nav-label">Reports</span></a></li>
+    <li><a href="report.php"><span class="nav-icon"></span><span class="nav-label">Reports</span></a></li>
   </ul>
   <div class="sidebar-footer">
     <p>Cubiertos Food Hub &copy; 2025</p>
@@ -48,7 +48,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
     <h1><span>Calendar</span> Dashboard</h1>
   </div>
   <nav>
-    <a href="main.html">Home</a>
+
     <a href="logout.php" class="btn logout">Logout</a>
   </nav>
 </header>
@@ -890,11 +890,16 @@ function loadReservationList() {
   const searchValue = document.getElementById("searchClient")?.value.toLowerCase() || "";
   const filterValue = document.getElementById("statusFilter")?.value || "all";
 
+ const isSearching = searchValue.trim() !== "" || filterValue !== "all";
+  let displayCount = 0;
   let count = 1;
+
   orders.forEach(order => {
     if (order.name && !order.name.toLowerCase().includes(searchValue)) return;
     if (filterValue !== "all" && order.status !== filterValue) return;
+    if (!isSearching && displayCount >= 10) return;
 
+    displayCount++;
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${count++}</td>

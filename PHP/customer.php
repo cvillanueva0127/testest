@@ -230,41 +230,41 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 
     <li>
       <a href="admin.php">
-        <span class="nav-icon">⊞</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Dashboard</span>
       </a>
     </li>
 
     <li>
       <a href="revenue.php">
-        <span class="nav-icon">₱</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Revenue</span>
       </a>
     </li>
 
     <li>
       <a href="calendar.php">
-        <span class="nav-icon">◫</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Calendar</span>
       </a>
     </li>
 
     <li class="active">
       <a href="customer.php">
-        <span class="nav-icon">◎</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Customers</span>
       </a>
     </li>
 
     <li>
   <a href="payment_admin.php">
-    <span class="nav-icon">📲</span>
+    <span class="nav-icon"></span>
     <span class="nav-label">Payments</span></a>
   </li>
 
     <li>
       <a href="report.php">
-        <span class="nav-icon">▤</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Reports</span>
       </a>
     </li>
@@ -286,7 +286,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
     </div>
 
     <nav>
-        <a href="main.html">Home</a>
+  
         <a href="logout.php" class="btn logout">Logout</a>
     </nav>
 
@@ -536,7 +536,10 @@ function renderCustomers() {
         return;
     }
 
-    filtered.forEach((c, i) => {
+    const isSearching = search.trim() !== "";
+const displayList = isSearching ? filtered : filtered.slice(0, 10);
+
+displayList.forEach((c, i) => {
 
         const t = getType(c);
 

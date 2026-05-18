@@ -30,42 +30,42 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 
     <li class="active">
       <a href="admin.php">
-        <span class="nav-icon">⊞</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Dashboard</span>
       </a>
     </li>
 
     <li>
       <a href="revenue.php">
-        <span class="nav-icon">₱</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Revenue</span>
       </a>
     </li>
 
     <li>
       <a href="calendar.php">
-        <span class="nav-icon">◫</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Calendar</span>
       </a>
     </li>
 
     <li>
       <a href="customer.php">
-        <span class="nav-icon">◎</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Customers</span>
       </a>
     </li>
 
     <li>
       <a href="payment_admin.php">
-        <span class="nav-icon">📲</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Payments</span>
       </a>
     </li>
 
     <li>
       <a href="report.php">
-        <span class="nav-icon">▤</span>
+        <span class="nav-icon"></span>
         <span class="nav-label">Reports</span>
       </a>
     </li>
@@ -87,6 +87,19 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
   </div>
 
   <nav>
+
+    <!-- SECTION SEARCH -->
+    <div class="section-search-wrap" id="sectionSearchWrap">
+      <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:15px;pointer-events:none;" aria-hidden="true"></i>
+      <input
+        type="text"
+        id="sectionSearch"
+        placeholder="Jump to section…"
+        autocomplete="off"
+      >
+      <div class="section-search-dropdown" id="sectionDropdown"></div>
+    </div>
+
     <!-- NOTIFICATION BELL -->
     <div class="notif-bell-wrap" id="notifBell" onclick="toggleNotifPanel()">
       <button class="notif-bell-btn" title="Notifications">
@@ -94,7 +107,6 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
       </button>
       <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
 
-      <!-- Notification Dropdown -->
       <div class="notif-dropdown" id="notifDropdown">
         <div class="notif-dropdown-header">
           <span>🔔 Notifications</span>
@@ -106,8 +118,9 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
       </div>
     </div>
 
-    <a href="main.html">Home</a>
+
     <a href="logout.php" class="btn logout">Logout</a>
+
   </nav>
 
 </header>
@@ -181,7 +194,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 
       <div class="overview-card revenue">
         <h3>Total Revenue</h3>
-        <p>₱<span id="ov_totalRevenue">0</span></p>
+        <p><span id="ov_totalRevenue">0</span></p>
         <span class="tag">Earned Income</span>
       </div>
 
@@ -209,7 +222,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
       </div>
 
       <p class="completed-notice" id="completedNotice">
-        ✅ Completed bookings are hidden from this view. To see them, select <strong>Completed (History)</strong> from the filter.
+         Completed bookings are hidden from this view. To see them, select <strong>Completed (History)</strong> from the filter.
       </p>
 
       <table id="ordersTable">
@@ -255,7 +268,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 
   <div class="events-panel-header">
     <div class="events-panel-title">
-      <span class="ep-icon">📅</span>
+      <span class="ep-icon"></span>
       <h3>Upcoming Events</h3>
       <span class="events-count-badge" id="upcomingBadge" style="display:none;">0</span>
     </div>
@@ -266,7 +279,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 
   <div class="events-panel-body" id="upcomingEventsContainer">
     <div class="events-empty">
-      <div class="events-empty-icon">📅</div>
+      <div class="events-empty-icon"></div>
       <p>Loading events…</p>
     </div>
   </div>
@@ -297,6 +310,95 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
       notice.classList.remove("hidden");
     }
   });
+
+  const SECTIONS = [
+  {
+    id: "ordersTable",
+    label: "Booking Table",
+    desc: "Approve & cancel reservations",
+    icon: "ti-calendar-check"
+  },
+  {
+    id: "notesContainer",
+    label: "Special Notes",
+    desc: "Customer special requests",
+    icon: "ti-note"
+  },
+  {
+    id: "eventsPanel",
+    label: "Upcoming Events",
+    desc: "Next 7 days panel",
+    icon: "ti-clock"
+  },
+  {
+    id: "ov_totalBookings",
+    label: "Booking Overview",
+    desc: "KPI stats & numbers",
+    icon: "ti-chart-bar"
+  }
+];
+
+const sectionInput    = document.getElementById("sectionSearch");
+const sectionDropdown = document.getElementById("sectionDropdown");
+
+function renderSectionResults(query) {
+  const q = query.toLowerCase().trim();
+  const results = q === ""
+    ? SECTIONS
+    : SECTIONS.filter(s =>
+        s.label.toLowerCase().includes(q) ||
+        s.desc.toLowerCase().includes(q)
+      );
+
+  if (results.length === 0) {
+    sectionDropdown.innerHTML = `<div style="padding:12px 14px;font-size:0.8rem;color:var(--text-3);">No sections found</div>`;
+  } else {
+    sectionDropdown.innerHTML = results.map(s => `
+      <div class="section-result-item" onclick="jumpToSection('${s.id}')">
+        <i class="ti ${s.icon}" aria-hidden="true"></i>
+        <div>
+          <div>${s.label}</div>
+          <div class="section-result-desc">${s.desc}</div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  sectionDropdown.classList.add("open");
+}
+
+function jumpToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  // Highlight the target briefly
+  el.style.transition = "outline 0.2s";
+  el.style.outline = "2px solid var(--brand)";
+  el.style.borderRadius = "var(--r-md)";
+  setTimeout(() => { el.style.outline = "none"; }, 1800);
+
+  // Scroll into view
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // Close dropdown
+  sectionDropdown.classList.remove("open");
+  sectionInput.value = "";
+}
+
+sectionInput.addEventListener("input", () => {
+  renderSectionResults(sectionInput.value);
+});
+
+sectionInput.addEventListener("focus", () => {
+  renderSectionResults(sectionInput.value);
+});
+
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("sectionSearchWrap");
+  if (wrap && !wrap.contains(e.target)) {
+    sectionDropdown.classList.remove("open");
+  }
+});
 </script>
 
 </body>

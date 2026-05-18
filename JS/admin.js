@@ -98,7 +98,7 @@ function loadOrders() {
         <button class="btn-action btn-complete btn-disabled"
                 disabled
                 title="You must approve the booking before completing it">
-          🔒 Complete
+           Complete
         </button>
         <button class="btn-action btn-cancel"
                 onclick="cancelOrder(${order.id})"
@@ -212,7 +212,7 @@ window.completeOrder = function (id) {
 
   if (order.status !== "Approved") {
     showActionToast(
-      "⚠️ This booking must be Approved before it can be Completed.",
+      " This booking must be Approved before it can be Completed.",
       "warning"
     );
     return;
@@ -409,8 +409,8 @@ function renderUpcomingEvents() {
           <span>₱${Number(order.amount || 0).toLocaleString()}</span>
         </div>
         <div class="event-datetime">
-          <span class="event-date-str">📆 ${formattedDate}</span>
-          <span class="event-time-str">🕐 ${formattedTime}</span>
+          <span class="event-date-str">${formattedDate}</span>
+          <span class="event-time-str"> ${formattedTime}</span>
         </div>
       </div>
       <div class="event-card-footer">
@@ -444,7 +444,7 @@ function checkEventNotifications() {
       notificationHistory.push(key30);
       addNotification({
         type:    "warning",
-        icon:    "⏰",
+    
         title:   "Event Starting Soon",
         message: `${order.name}'s ${order.occasion || "booking"} starts in ~${Math.round(diffMins)} min`,
         orderId: order.id,
@@ -456,7 +456,6 @@ function checkEventNotifications() {
       notificationHistory.push(key0);
       addNotification({
         type:    "info",
-        icon:    "🎉",
         title:   "Event Starting Now",
         message: `${order.name}'s ${order.occasion || "event"} is beginning now!`,
         orderId: order.id,

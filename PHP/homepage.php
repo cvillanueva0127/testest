@@ -16,20 +16,14 @@ include("connect.php");
 
   <header class="glass-header">
     <div class="nav-container">
-      <a href="../HTML/main.html" class="logo">
+      <a href="" class="logo">
         <img src="../IMAGES/logo2.jpg" alt="Cubiertos Logo">
         <div class="logo-text">
           <h2>Cubiertos</h2>
           <span>FOOD HUB</span>
         </div>
       </a>
-      <nav class="navbar">
-        <a href="../HTML/main.html">Home</a>
-        <a href="../HTML/about.html">About</a>
-        <a href="../HTML/Store.html">Stores</a>
-        <a href="../HTML/contacts.html">Contacts</a>
-      </nav>
-      <a href="profile.php" class="login-btn"><i>👤</i> Profile</a>
+      <a href="profile.php" class="login-btn"> Profile</a>
       <div class="menu-toggle" id="menuToggle">☰</div>
     </div>
   </header>
@@ -107,7 +101,7 @@ include("connect.php");
 
   <section class="booking-stats">
     <div class="stat-card"><h3>500+</h3><p>Successful Events</p></div>
-    <div class="stat-card"><h3>4.9★</h3><p>Customer Satisfaction</p></div>
+    <div class="stat-card"><h3>4.9</h3><p>Customer Satisfaction</p></div>
     <div class="stat-card"><h3>24/7</h3><p>Reservation Support</p></div>
     <div class="stat-card"><h3>100%</h3><p>Freshly Prepared Meals</p></div>
   </section>
@@ -120,7 +114,7 @@ include("connect.php");
       <p class="intro-text">
         Reserve your table for birthdays, weddings, or special events at <b>Cubiertos Food Hub</b>.
         <br><small style="color:#bc6c25; font-weight:600; display:block; margin-top:6px;">
-          ⏰ Available slots: Morning (8:00 AM) · Afternoon (2:00 PM) · Evening (7:00 PM)
+           Available slots: Morning (8:00 AM) · Afternoon (2:00 PM) · Evening (7:00 PM)
         </small>
       </p>
 
@@ -174,7 +168,7 @@ include("connect.php");
         <p><i>Number of Guests</i><br>
           <input type="number" name="guests" id="guestsInput" placeholder="Enter number of guests" min="1" max="500" required>
           <span id="guestWarning" style="display:none;">
-            ⚠️ Your guest count exceeds the remaining capacity for this date.
+             Your guest count exceeds the remaining capacity for this date.
           </span>
         </p>
 
@@ -202,7 +196,7 @@ include("connect.php");
         <!-- Hidden date input -->
         <input type="hidden" name="date" id="dateInput">
         <p id="selectedDateLabel" style="font-size:0.9rem; color:#bc6c25; font-weight:600; margin-bottom:10px; display:none;">
-          📅 Selected: <span id="selectedDateText"></span>
+           Selected: <span id="selectedDateText"></span>
         </p>
 
         <!-- SLOT SELECTION -->
@@ -211,21 +205,21 @@ include("connect.php");
           <div class="slot-grid" id="slotGrid">
             <label class="slot-card" id="slotMorning">
               <input type="radio" name="slot" value="morning" required>
-              <div class="slot-icon">🌅</div>
+              <div class="slot-icon"></div>
               <div class="slot-label">Morning</div>
               <div class="slot-time">8:00 AM</div>
               <div class="slot-status" id="statusMorning">Select a date first</div>
             </label>
             <label class="slot-card" id="slotAfternoon">
               <input type="radio" name="slot" value="afternoon">
-              <div class="slot-icon">☀️</div>
+              <div class="slot-icon"></div>
               <div class="slot-label">Afternoon</div>
               <div class="slot-time">2:00 PM</div>
               <div class="slot-status" id="statusAfternoon">Select a date first</div>
             </label>
             <label class="slot-card" id="slotEvening">
               <input type="radio" name="slot" value="evening">
-              <div class="slot-icon">🌙</div>
+              <div class="slot-icon"></div>
               <div class="slot-label">Evening</div>
               <div class="slot-time">7:00 PM</div>
               <div class="slot-status" id="statusEvening">Select a date first</div>
@@ -254,7 +248,7 @@ include("connect.php");
               <input type="radio" name="payment" value="GCash" required>
               <span class="payment-card">
                 <div class="payment-left">
-                  <div class="payment-icon">📱</div>
+                  
                   <div class="payment-info">
                     <h4>GCash</h4>
                     <small>Secure mobile wallet payment for fast reservation confirmation.</small>
@@ -267,7 +261,6 @@ include("connect.php");
               <input type="radio" name="payment" value="Cash">
               <span class="payment-card">
                 <div class="payment-left">
-                  <div class="payment-icon">💵</div>
                   <div class="payment-info">
                     <h4>Cash Payment</h4>
                     <small>Pay directly at Cubiertos Food Hub during your reservation.</small>
@@ -284,7 +277,7 @@ include("connect.php");
               <div class="gcash-layout">
                 <div class="gcash-info-side">
                   <div class="gcash-header">
-                    <div class="gcash-icon">📲</div>
+              
                     <div>
                       <h4>GCash Reservation Details</h4>
                       <p>Send your reservation payment to:</p>
