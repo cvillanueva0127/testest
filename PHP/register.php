@@ -10,10 +10,10 @@ if (isset($_POST['signIn'])) {
     $email    = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT Id, password, is_verified FROM users WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT Id, password, is_verified, role FROM users WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
-    $stmt->bind_result($id, $hashedPassword, $isVerified);
+    $stmt->bind_result($id, $hashedPassword, $isVerified, $role);
     $stmt->fetch();
     $stmt->close();
 
@@ -22,15 +22,24 @@ if (isset($_POST['signIn'])) {
         exit();
     }
 
+    // ✅ Admin skips verification check
     if (!$isVerified) {
-        header("Location: ../HTML/login.html?error=" . urlencode("Please verify your email before logging in."));
-        exit();
+        if ($role !== 'admin') {
+            header("Location: ../HTML/login.html?error=" . urlencode("Please verify your email before logging in."));
+            exit();
+        }
     }
 
-    // Login success — set session and redirect
     $_SESSION['user_id'] = $id;
+    $_SESSION['id']      = $id;
     $_SESSION['email']   = $email;
-    header("Location: homepage.php");
+    $_SESSION['role']    = $role;
+
+    if ($role === 'admin') {
+        header("Location: ../PHP/admin.php");
+    } else {
+        header("Location: ../PHP/homepage.php");
+    }
     exit();
 }
 
@@ -50,7 +59,6 @@ if (isset($_POST['signUp'])) {
         exit();
     }
 
-    // Check duplicate email
     $check = $conn->prepare("SELECT Id FROM users WHERE email = ?");
     $check->bind_param("s", $email);
     $check->execute();
@@ -61,13 +69,9 @@ if (isset($_POST['signUp'])) {
     }
     $check->close();
 
-    // Hash password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-    // Generate verification token
     $token = bin2hex(random_bytes(32));
 
-    // Insert user
     $stmt = $conn->prepare(
         "INSERT INTO users (firstName, lastName, email, password, gender, is_verified, verification_token)
          VALUES (?, ?, ?, ?, ?, 0, ?)"
