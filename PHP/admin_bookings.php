@@ -209,4 +209,26 @@ if ($action === 'set_capacity' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// ── COMPLETE booking from notes ───────────────────────────────
+if ($action === 'complete_from_notes' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $id = (int)($_POST['id'] ?? 0);
+
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'Invalid ID.']);
+        exit;
+    }
+
+    $stmt = $conn->prepare("UPDATE bookings SET status = 'Completed' WHERE id = ? AND status = 'Approved'");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+
+    echo json_encode([
+        'success' => $affected > 0,
+        'message' => $affected > 0 ? 'Booking marked as completed.' : 'Booking must be Approved before completing.',
+    ]);
+    exit;
+}
 echo json_encode(['error' => 'Unknown action.']);

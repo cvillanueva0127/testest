@@ -13,8 +13,6 @@ async function fetchOrders() {
 
     if (data.success) {
       orders         = data.bookings       || [];
-      // Use server-pre-filtered upcoming events when available (PHP does the heavy lifting)
-      // Falls back to all orders so client-side filter still works
       upcomingEvents = data.upcomingEvents || orders;
 
       loadOrders();
@@ -126,7 +124,6 @@ function loadOrders() {
     displayIndex++;
 
     const row = document.createElement("tr");
-
     row.innerHTML = `
       <td>${displayIndex}</td>
       <td>${order.name || "—"}</td>
@@ -158,14 +155,13 @@ function loadOrders() {
   }
 
   // ================= DASHBOARD STATS =================
-  // Guard every getElementById with ?. so missing elements never crash
   const _el = (id) => document.getElementById(id);
-  if (_el("ov_totalBookings"))    _el("ov_totalBookings").textContent    = orders.length;
-  if (_el("ov_pendingBookings"))  _el("ov_pendingBookings").textContent  = pending;
-  if (_el("ov_approvedBookings")) _el("ov_approvedBookings").textContent = approved;
-  if (_el("ov_completedBookings"))_el("ov_completedBookings").textContent= completed;
-  if (_el("ov_cancelledBookings"))_el("ov_cancelledBookings").textContent= cancelled;
-  if (_el("ov_totalRevenue"))     _el("ov_totalRevenue").textContent     = totalRevenue.toLocaleString();
+  if (_el("ov_totalBookings"))     _el("ov_totalBookings").textContent     = orders.length;
+  if (_el("ov_pendingBookings"))   _el("ov_pendingBookings").textContent   = pending;
+  if (_el("ov_approvedBookings"))  _el("ov_approvedBookings").textContent  = approved;
+  if (_el("ov_completedBookings")) _el("ov_completedBookings").textContent = completed;
+  if (_el("ov_cancelledBookings")) _el("ov_cancelledBookings").textContent = cancelled;
+  if (_el("ov_totalRevenue"))      _el("ov_totalRevenue").textContent      = totalRevenue.toLocaleString();
 
   if (_el("ov_pendingFlow"))   _el("ov_pendingFlow").textContent   = pending;
   if (_el("ov_approvedFlow"))  _el("ov_approvedFlow").textContent  = approved;
@@ -183,8 +179,10 @@ function loadOrders() {
     if (percentage > 100) percentage = 100;
     fillEl.style.width = percentage + "%";
   }
-}
 
+  // ✅ REAL-TIME NOTES SYNC — always re-render notes after orders update
+  loadSpecialNotes();
+}
 
 // ================= UPDATE STATUS =================
 async function updateStatus(id, status) {
@@ -259,18 +257,18 @@ window.setNewLimit = function () {
 let nav = 0;
 
 function renderCalendar() {
-  const calendarGrid  = document.getElementById("calendarGrid");
-  const monthDisplay  = document.getElementById("monthDisplay");
+  const calendarGrid = document.getElementById("calendarGrid");
+  const monthDisplay = document.getElementById("monthDisplay");
   if (!calendarGrid || !monthDisplay) return;
 
   const dt = new Date();
   if (nav !== 0) dt.setMonth(new Date().getMonth() + nav);
 
-  const month            = dt.getMonth();
-  const year             = dt.getFullYear();
-  const firstDayOfMonth  = new Date(year, month, 1);
-  const daysInMonth      = new Date(year, month + 1, 0).getDate();
-  const paddingDays      = firstDayOfMonth.getDay();
+  const month           = dt.getMonth();
+  const year            = dt.getFullYear();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const daysInMonth     = new Date(year, month + 1, 0).getDate();
+  const paddingDays     = firstDayOfMonth.getDay();
 
   monthDisplay.textContent = dt.toLocaleDateString("en-us", {
     month: "long",
@@ -282,9 +280,9 @@ function renderCalendar() {
   const ordersByDate = {};
   orders.forEach((order) => {
     if (order.booking_datetime) {
-      const orderDate  = parseBookingDate(order.booking_datetime);
+      const orderDate = parseBookingDate(order.booking_datetime);
       if (!orderDate) return;
-      const dateKey    = `${orderDate.getFullYear()}-${orderDate.getMonth()}-${orderDate.getDate()}`;
+      const dateKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}-${orderDate.getDate()}`;
       if (!ordersByDate[dateKey]) ordersByDate[dateKey] = [];
       ordersByDate[dateKey].push(order);
     }
@@ -293,10 +291,10 @@ function renderCalendar() {
   for (let i = 1; i <= paddingDays + daysInMonth; i++) {
     const daySquare = document.createElement("div");
     if (i > paddingDays) {
-      const dayNumber         = i - paddingDays;
-      daySquare.textContent   = dayNumber;
-      const currentSquareKey  = `${year}-${month}-${dayNumber}`;
-      const daysBookings      = ordersByDate[currentSquareKey];
+      const dayNumber        = i - paddingDays;
+      daySquare.textContent  = dayNumber;
+      const currentSquareKey = `${year}-${month}-${dayNumber}`;
+      const daysBookings     = ordersByDate[currentSquareKey];
       if (daysBookings && daysBookings.length > 0) {
         const indicator       = document.createElement("div");
         indicator.textContent = `● ${daysBookings.length}`;
@@ -312,11 +310,10 @@ function renderCalendar() {
 // ================= HELPERS =================
 
 // Fix MySQL "YYYY-MM-DD HH:MM:SS" → JS-safe "YYYY-MM-DDTHH:MM:SS"
-// Without this, new Date("2025-06-01 18:00:00") returns Invalid Date in Safari/Firefox
 function parseBookingDate(str) {
   if (!str) return null;
-  const fixed = str.replace(" ", "T"); // "2025-06-01 18:00:00" → "2025-06-01T18:00:00"
-  const dt = new Date(fixed);
+  const fixed = str.replace(" ", "T");
+  const dt    = new Date(fixed);
   return isNaN(dt.getTime()) ? null : dt;
 }
 
@@ -328,21 +325,18 @@ function renderUpcomingEvents() {
 
   const now = new Date();
 
-  // Use the server-pre-filtered list (Pending/Approved, ±3 to +7 days)
-  // Then sort by booking_datetime ascending
   const upcoming = upcomingEvents
     .filter(o => {
       const dt = parseBookingDate(o.booking_datetime);
       if (!dt) return false;
       if (o.status === "Completed" || o.status === "Cancelled") return false;
-      return true; // server already filtered date range
+      return true;
     })
     .sort((a, b) => parseBookingDate(a.booking_datetime) - parseBookingDate(b.booking_datetime));
 
-  // Update badge
   const badge = document.getElementById("upcomingBadge");
   if (badge) {
-    badge.textContent = upcoming.length;
+    badge.textContent   = upcoming.length;
     badge.style.display = upcoming.length > 0 ? "flex" : "none";
   }
 
@@ -365,10 +359,9 @@ function renderUpcomingEvents() {
 
     let timeLabel  = "";
     let timeClass  = "";
-    let eventState = "upcoming"; // upcoming | starting-soon | ongoing | past
+    let eventState = "upcoming";
 
     if (diffMins < 0) {
-      // Event is in the past (within today's window)
       timeLabel  = `Started ${Math.abs(diffMins)} min ago`;
       timeClass  = "time-past";
       eventState = "ongoing";
@@ -415,7 +408,7 @@ function renderUpcomingEvents() {
       </div>
       <div class="event-card-footer">
         <span class="event-booking-status ${order.status.toLowerCase()}">${order.status}</span>
-        ${order.status === "Pending" ? `<button class="evt-btn evt-approve" onclick="approveOrder(${order.id})">Approve</button>` : ""}
+        ${order.status === "Pending"  ? `<button class="evt-btn evt-approve"  onclick="approveOrder(${order.id})">Approve</button>`  : ""}
         ${order.status === "Approved" ? `<button class="evt-btn evt-complete" onclick="completeOrder(${order.id})">Complete</button>` : ""}
       </div>
     `;
@@ -439,19 +432,16 @@ function checkEventNotifications() {
     const key0     = `notif-0-${order.id}`;
     const keyDone  = `notif-done-${order.id}`;
 
-    // 30 minutes before
     if (diffMins > 0 && diffMins <= 30 && !notificationHistory.includes(key30)) {
       notificationHistory.push(key30);
       addNotification({
         type:    "warning",
-    
         title:   "Event Starting Soon",
         message: `${order.name}'s ${order.occasion || "booking"} starts in ~${Math.round(diffMins)} min`,
         orderId: order.id,
       });
     }
 
-    // Event time reached (within 5 min window)
     if (diffMins >= -5 && diffMins <= 5 && !notificationHistory.includes(key0)) {
       notificationHistory.push(key0);
       addNotification({
@@ -462,7 +452,6 @@ function checkEventNotifications() {
       });
     }
 
-    // Event ended (60 min after start, and still Approved)
     if (diffMins <= -60 && order.status === "Approved" && !notificationHistory.includes(keyDone)) {
       notificationHistory.push(keyDone);
       addNotification({
@@ -481,36 +470,31 @@ function addNotification({ type, icon, title, message, orderId, action }) {
   const panel = document.getElementById("notifList");
   if (!panel) return;
 
-  // Remove "no notifications" placeholder
   const placeholder = panel.querySelector(".notif-placeholder");
   if (placeholder) placeholder.remove();
 
-  // Update bell badge
   updateNotifBadge(1);
 
   const item = document.createElement("div");
-  item.className = `notif-item notif-${type}`;
+  item.className       = `notif-item notif-${type}`;
   item.dataset.orderId = orderId;
   item.innerHTML = `
-    <div class="notif-icon">${icon}</div>
+    <div class="notif-icon">${icon || ""}</div>
     <div class="notif-body">
       <div class="notif-title">${title}</div>
       <div class="notif-msg">${message}</div>
       <div class="notif-time">${new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}</div>
-      ${action ? `<button class="notif-action-btn" onclick="${action.fn.toString().replace(/"/g, "'")}">${action.label}</button>` : ""}
+      ${action ? `<button class="notif-action-btn">${action.label}</button>` : ""}
     </div>
     <button class="notif-dismiss" onclick="dismissNotif(this)" title="Dismiss">✕</button>
   `;
 
-  // Action button workaround (closures don't survive innerHTML)
   if (action) {
     const btn = item.querySelector(".notif-action-btn");
     if (btn) btn.addEventListener("click", action.fn);
   }
 
   panel.prepend(item);
-
-  // Also show a floating toast
   showEventToast({ type, icon, title, message });
 }
 
@@ -519,11 +503,11 @@ function updateNotifBadge(delta) {
   notifCount = Math.max(0, notifCount + delta);
   const badge = document.getElementById("notifBadge");
   if (!badge) return;
-  badge.textContent = notifCount;
+  badge.textContent   = notifCount;
   badge.style.display = notifCount > 0 ? "flex" : "none";
 }
 
-window.dismissNotif = function(btn) {
+window.dismissNotif = function (btn) {
   const item = btn.closest(".notif-item");
   if (item) {
     item.style.animation = "notifFadeOut 0.3s ease forwards";
@@ -538,7 +522,7 @@ window.dismissNotif = function(btn) {
   }
 };
 
-window.clearAllNotifications = function() {
+window.clearAllNotifications = function () {
   const panel = document.getElementById("notifList");
   if (!panel) return;
   panel.innerHTML = `<div class="notif-placeholder">No new notifications</div>`;
@@ -550,7 +534,7 @@ function showEventToast({ type, icon, title, message }) {
   const toast = document.createElement("div");
   toast.className = `event-toast event-toast--${type}`;
   toast.innerHTML = `
-    <div class="et-icon">${icon}</div>
+    <div class="et-icon">${icon || ""}</div>
     <div class="et-content">
       <strong>${title}</strong>
       <span>${message}</span>
@@ -564,22 +548,19 @@ function showEventToast({ type, icon, title, message }) {
   }, 6000);
 }
 
-// Toggle notification panel
-window.toggleNotifPanel = function() {
+window.toggleNotifPanel = function () {
   const panel = document.getElementById("notifDropdown");
   if (!panel) return;
   panel.classList.toggle("open");
 };
 
-// Toggle upcoming events panel
-window.toggleEventsPanel = function() {
+window.toggleEventsPanel = function () {
   const panel = document.getElementById("eventsPanel");
   if (!panel) return;
   panel.classList.toggle("collapsed");
 };
 
-// Close panels when clicking outside
-document.addEventListener("click", function(e) {
+document.addEventListener("click", function (e) {
   const dropdown = document.getElementById("notifDropdown");
   const bell     = document.getElementById("notifBell");
   if (dropdown && !dropdown.contains(e.target) && bell && !bell.contains(e.target)) {
@@ -587,118 +568,180 @@ document.addEventListener("click", function(e) {
   }
 });
 
+// ================= SPECIAL NOTES =================
+function loadSpecialNotes() {
+  const container = document.getElementById("notesContainer");
+  if (!container) return;
+
+  const search = document.getElementById("searchNotes")?.value.toLowerCase() || "";
+
+  const notesData = orders.filter(o =>
+    o.special_notes &&
+    o.special_notes.trim() !== "" &&
+    o.status !== "Completed" &&
+    o.status !== "Cancelled"
+  );
+
+  container.innerHTML = "";
+
+  if (notesData.length === 0) {
+    container.innerHTML = `<p class="empty-note">No special notes available.</p>`;
+    return;
+  }
+
+  let hasResult = false;
+
+  notesData.forEach((note) => {
+    const customer = (note.name          || "").toLowerCase();
+    const message  = (note.special_notes || "").toLowerCase();
+    if (!customer.includes(search) && !message.includes(search)) return;
+
+    hasResult = true;
+
+    const completeBtn = note.status === "Approved"
+      ? `<button
+             class="note-complete-btn"
+             onclick="completeFromNotes(${note.id}, this)"
+             title="Mark as completed">
+           ✔ Complete
+         </button>`
+      : `<span class="note-status-tag note-status-${note.status.toLowerCase()}">${note.status}</span>`;
+
+    const noteEl      = document.createElement("div");
+    noteEl.className  = "note-box";
+    noteEl.dataset.id = note.id;
+    noteEl.innerHTML  = `
+      <div class="note-top">
+        <h3>${note.name}</h3>
+        <span>${new Date(note.booking_datetime.replace(" ", "T")).toLocaleString()}</span>
+      </div>
+      <div class="note-body">
+        <p><strong>Occasion:</strong> ${note.occasion || "—"}</p>
+        <p><strong>Guests:</strong> ${note.guests || 0}</p>
+        <p><strong>Status:</strong> ${note.status || "Pending"}</p>
+        <div class="special-message">
+          ${note.special_notes || "No special note"}
+        </div>
+      </div>
+      <div class="note-footer">
+        ${completeBtn}
+      </div>`;
+
+    container.appendChild(noteEl);
+  });
+
+  if (!hasResult) {
+    container.innerHTML = `<p class="empty-note">No matching notes found.</p>`;
+  }
+}
+
+// ── COMPLETE FROM NOTES ───────────────────────────────────────
+window.completeFromNotes = async function (id, btn) {
+  if (!confirm("Mark this booking as Completed?")) return;
+
+  btn.disabled    = true;
+  btn.textContent = "Processing…";
+
+  try {
+    const res  = await fetch("admin_bookings.php?action=complete_from_notes", {
+      method:  "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body:    `id=${id}`
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // Update local orders array immediately so stats re-render correctly
+      const order = orders.find(o => String(o.id) === String(id));
+      if (order) order.status = "Completed";
+
+      // Animate note card out
+      const noteBox = btn.closest(".note-box");
+      if (noteBox) {
+        noteBox.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+        noteBox.style.opacity    = "0";
+        noteBox.style.transform  = "scale(0.95)";
+        setTimeout(() => {
+          noteBox.remove();
+          const container = document.getElementById("notesContainer");
+          if (container && container.querySelectorAll(".note-box").length === 0) {
+            container.innerHTML = `<p class="empty-note">No special notes available.</p>`;
+          }
+        }, 400);
+      }
+
+      showActionToast("✔ Booking marked as completed.", "success");
+      loadOrders(); // re-renders table, stats, and notes in one call
+    } else {
+      btn.disabled    = false;
+      btn.textContent = "✔ Complete";
+      showActionToast("⚠️ " + data.message, "warning");
+    }
+  } catch (err) {
+    btn.disabled    = false;
+    btn.textContent = "✔ Complete";
+    showActionToast("❌ Connection error.", "warning");
+  }
+};
+
+// Search listener — filters from orders array, no extra fetch needed
+document.getElementById("searchNotes")?.addEventListener("input", loadSpecialNotes);
+
+// ================= CLEANUP =================
+window.cleanupAll = async function () {
+  const confirmed = confirm(
+    "⚠️ This will permanently delete ALL cancelled bookings.\n\nThis cannot be undone. Continue?"
+  );
+  if (!confirmed) return;
+
+  try {
+    const res  = await fetch("cleanup_old_bookings.php?action=delete_cancelled");
+    const data = await res.json();
+
+    if (data.success) {
+      showActionToast(
+        `🗑 ${data.deleted} cancelled booking(s) permanently deleted.`,
+        data.deleted > 0 ? "success" : "info"
+      );
+      orders = [];
+      await fetchOrders();
+    } else {
+      showActionToast("❌ Failed to delete cancelled bookings.", "warning");
+    }
+  } catch (err) {
+    console.warn("Cleanup error:", err);
+    showActionToast("❌ Connection error during cleanup.", "warning");
+  }
+};
+
+// Auto-cleanup: runs silently once per session (30-day old records only)
+if (!sessionStorage.getItem("cleanupDone")) {
+  sessionStorage.setItem("cleanupDone", "true");
+  fetch("cleanup_old_bookings.php?action=auto")
+    .then(r => r.json())
+    .then(data => {
+      if (data.deleted > 0) {
+        console.log(`Auto-cleanup: ${data.deleted} old record(s) removed.`);
+        fetchOrders();
+      }
+    })
+    .catch(err => console.warn("Auto-cleanup error:", err));
+}
+
 // ================= START =================
 fetchOrders();
-// Re-check notifications every 60 seconds
-setInterval(() => {
-  fetchOrders();
-}, 60000);
+setInterval(fetchOrders, 60000);
 
 // ================= LOADER (RUN ONCE PER SESSION) =================
 window.addEventListener("load", function () {
   const loader = document.getElementById("startup-loader");
-  if (loader) {
-    if (!sessionStorage.getItem("hasSeenLoader")) {
-      loader.style.display = "flex";
-      sessionStorage.setItem("hasSeenLoader", "true");
-      setTimeout(() => { loader.style.display = "none"; }, 2000);
-    } else {
-      loader.style.display = "none";
-    }
+  if (!loader) return;
+
+  if (!sessionStorage.getItem("hasSeenLoader")) {
+    loader.style.display = "flex";
+    sessionStorage.setItem("hasSeenLoader", "true");
+    setTimeout(() => { loader.style.display = "none"; }, 2000);
+  } else {
+    loader.style.display = "none";
   }
 });
-
-// ================= SPECIAL NOTES =================
-async function loadSpecialNotes() {
-  const container = document.getElementById("notesContainer");
-  const search    = document.getElementById("searchNotes").value.toLowerCase();
-
-  try {
-    const response = await fetch("fetch_notes.php");
-    const notes    = await response.json();
-
-    container.innerHTML = "";
-
-    if (notes.length === 0) {
-      container.innerHTML = `<p class="empty-note">No special notes found.</p>`;
-      return;
-    }
-
-    let hasResult = false;
-
-    notes.forEach((note) => {
-      const customer = (note.name          || "").toLowerCase();
-      const message  = (note.special_notes || "").toLowerCase();
-      if (!customer.includes(search) && !message.includes(search)) return;
-
-      hasResult = true;
-      container.innerHTML += `
-        <div class="note-box">
-          <div class="note-top">
-            <h3>${note.name}</h3>
-            <span>${new Date(note.booking_datetime).toLocaleString()}</span>
-          </div>
-          <div class="note-body">
-            <p><strong>Occasion:</strong> ${note.occasion || "—"}</p>
-            <p><strong>Guests:</strong> ${note.guests || 0}</p>
-            <p><strong>Status:</strong> ${note.status || "Pending"}</p>
-            <div class="special-message">
-              ${note.special_notes || "No special note"}
-            </div>
-          </div>
-        </div>`;
-    });
-
-    if (!hasResult) {
-      container.innerHTML = `<p class="empty-note">No matching notes found.</p>`;
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-document.getElementById("searchNotes")?.addEventListener("input", loadSpecialNotes);
-loadSpecialNotes();
-setInterval(loadSpecialNotes, 30000);
-
-// ================= COMBINED CLEANUP =================
-async function cleanupAll() {
-    const confirmed = confirm(
-        "⚠️ This will permanently delete ALL cancelled bookings.\n\nThis cannot be undone. Continue?"
-    );
-    if (!confirmed) return;
-
-    try {
-        const cancelledRes  = await fetch("cleanup_old_bookings.php?action=delete_cancelled");
-        const cancelledData = await cancelledRes.json();
-
-        if (cancelledData.success) {
-            showActionToast(
-                `🗑 ${cancelledData.deleted} cancelled booking(s) permanently deleted.`,
-                cancelledData.deleted > 0 ? "success" : "info"
-            );
-            orders = [];
-            await fetchOrders();
-        } else {
-            showActionToast("❌ Failed to delete cancelled bookings.", "warning");
-        }
-
-    } catch (err) {
-        console.warn("Cleanup error:", err);
-        showActionToast("❌ Connection error during cleanup.", "warning");
-    }
-}
-
-// ── AUTO CLEANUP: runs silently once per session (30-day old records only) ──
-if (!sessionStorage.getItem("cleanupDone")) {
-    sessionStorage.setItem("cleanupDone", "true");
-    fetch("cleanup_old_bookings.php?action=auto")
-        .then(r => r.json())
-        .then(data => {
-            if (data.deleted > 0) {
-                console.log(`Auto-cleanup: ${data.deleted} old record(s) removed.`);
-                fetchOrders();
-            }
-        })
-        .catch(err => console.warn("Auto-cleanup error:", err));
-}

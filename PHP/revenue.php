@@ -12,11 +12,55 @@ include "connect.php";
    TOTAL REVENUE
 ========================= */
 
+// Total Revenue — only confirmed payments
 $totalRevenueQuery = mysqli_query($conn,"
-SELECT SUM(amount) as totalRevenue
-FROM bookings
-WHERE status='Completed'
+    SELECT SUM(amount) as totalRevenue
+    FROM bookings
+    WHERE status='Completed' AND payment_status='Confirmed'
 ");
+$totalRevenueData = mysqli_fetch_assoc($totalRevenueQuery);
+$totalRevenue = $totalRevenueData['totalRevenue'] ?? 0;
+
+// Completed Revenue (pie chart)
+$q1 = mysqli_query($conn,"
+    SELECT SUM(amount) as total FROM bookings
+    WHERE status='Completed' AND payment_status='Confirmed'
+");
+$completedRevenue = mysqli_fetch_assoc($q1)['total'] ?? 0;
+
+// Pending Revenue (pie chart)
+$q2 = mysqli_query($conn,"
+    SELECT SUM(amount) as total FROM bookings WHERE status='Pending'
+");
+$pendingRevenue = mysqli_fetch_assoc($q2)['total'] ?? 0;
+
+// Approved Revenue (pie chart)
+$q3 = mysqli_query($conn,"
+    SELECT SUM(amount) as total FROM bookings WHERE status='Approved'
+");
+$approvedRevenue = mysqli_fetch_assoc($q3)['total'] ?? 0;
+
+// Cancelled Revenue (pie chart)
+$q4 = mysqli_query($conn,"
+    SELECT SUM(amount) as total FROM bookings WHERE status='Cancelled'
+");
+$cancelledRevenue = mysqli_fetch_assoc($q4)['total'] ?? 0;
+
+// Total Completed (confirmed only)
+$totalCompletedQuery = mysqli_query($conn,"
+    SELECT COUNT(*) as totalCompleted FROM bookings
+    WHERE status='Completed' AND payment_status='Confirmed'
+");
+$totalCompleted = mysqli_fetch_assoc($totalCompletedQuery)['totalCompleted'] ?? 0;
+
+// Monthly Revenue (confirmed only)
+$monthlyRevenueQuery = mysqli_query($conn,"
+    SELECT SUM(amount) as monthlyRevenue FROM bookings
+    WHERE status='Completed'
+    AND payment_status='Confirmed'
+    AND MONTH(booking_datetime)=MONTH(CURRENT_DATE())
+");
+$monthlyRevenue = mysqli_fetch_assoc($monthlyRevenueQuery)['monthlyRevenue'] ?? 0;
 
 $totalRevenueData = mysqli_fetch_assoc($totalRevenueQuery);
 
@@ -255,6 +299,14 @@ table td{
 
 }
 
+.status-unpaid {
+    background: #ff9800;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+
 </style>
 
 </head>
@@ -491,21 +543,22 @@ new Chart(ctx, {
 const allTransactions = [
     <?php
     // Re-run query to get all rows as JSON
-    $allPayments = mysqli_query($conn,"
-        SELECT name, occasion, payment_method, amount, booking_datetime
-        FROM bookings
-        WHERE status='Completed'
-        ORDER BY booking_datetime DESC
-    ");
+$allPayments = mysqli_query($conn,"
+    SELECT name, occasion, payment_method, amount, booking_datetime, payment_status
+    FROM bookings
+    WHERE status='Completed'
+    ORDER BY booking_datetime DESC
+");
     $rows = [];
     while($r = mysqli_fetch_assoc($allPayments)){
-        $rows[] = json_encode([
-            'name'           => $r['name'],
-            'occasion'       => $r['occasion'],
-            'payment_method' => $r['payment_method'],
-            'amount'         => $r['amount'],
-            'date'           => date("M d, Y", strtotime($r['booking_datetime']))
-        ]);
+    $rows[] = json_encode([
+    'name'           => $r['name'],
+    'occasion'       => $r['occasion'],
+    'payment_method' => $r['payment_method'],
+    'amount'         => $r['amount'],
+    'date'           => date("M d, Y", strtotime($r['booking_datetime'])),
+    'payment_status' => $r['payment_status'] ?? 'Pending'
+]);
     }
     echo implode(",\n    ", $rows);
     ?>
@@ -539,7 +592,11 @@ function renderTransactions() {
             <td>${t.payment_method}</td>
             <td>₱${Number(t.amount).toLocaleString()}</td>
             <td>${t.date}</td>
-            <td><span class="status-paid">Paid</span></td>
+            <td>
+    <span class="${t.payment_status === 'Confirmed' ? 'status-paid' : 'status-unpaid'}">
+        ${t.payment_status === 'Confirmed' ? 'Paid' : 'Unpaid'}
+    </span>
+</td>
         `;
         tbody.appendChild(tr);
     });

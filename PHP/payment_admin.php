@@ -82,20 +82,62 @@ if ($action === 'confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["success" => false, "message" => "Invalid ID."]);
         exit();
     }
-   try {
-    $pdo->prepare("
-        UPDATE bookings 
-        SET payment_status = 'Confirmed',
-            status = 'Completed'
-        WHERE id = ? AND payment_method = 'GCash'
-    ")->execute([$id]);
+    try {
+        // ✅ Check booking status first
+        $check = $pdo->prepare("SELECT status FROM bookings WHERE id = ? AND payment_method = 'GCash'");
+        $check->execute([$id]);
+        $booking = $check->fetch(PDO::FETCH_ASSOC);
 
-    echo json_encode(["success" => true, "message" => "Payment confirmed."]);
+        if (!$booking) {
+            echo json_encode(["success" => false, "message" => "Booking not found."]);
+            exit();
+        }
+
+        if ($booking['status'] !== 'Approved') {
+            echo json_encode([
+                "success" => false,
+                "message" => "⚠️ Cannot confirm payment. This booking must be Approved from the Admin Dashboard first."
+            ]);
+            exit();
+        }
+
+        // Booking is Approved — safe to confirm payment and complete
+       $pdo->prepare("
+    UPDATE bookings
+    SET payment_status = 'Confirmed'
+    WHERE id = ? AND payment_method = 'GCash'
+")->execute([$id]);
+
+        echo json_encode(["success" => true, "message" => "Payment confirmed and booking completed."]);
+
     } catch (PDOException $e) {
         echo json_encode(["success" => false, "message" => $e->getMessage()]);
     }
     exit();
 }
+
+// ── CANCEL a GCash payment booking ───────────────────
+if ($action === 'cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header("Content-Type: application/json");
+    $id = intval($_POST['id'] ?? 0);
+    if ($id <= 0) {
+        echo json_encode(["success" => false, "message" => "Invalid ID."]);
+        exit();
+    }
+    try {
+        $pdo->prepare("
+            UPDATE bookings 
+            SET status = 'Cancelled'
+            WHERE id = ? AND payment_method = 'GCash'
+        ")->execute([$id]);
+
+        echo json_encode(["success" => true, "message" => "Payment booking cancelled."]);
+    } catch (PDOException $e) {
+        echo json_encode(["success" => false, "message" => $e->getMessage()]);
+    }
+    exit();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -481,16 +523,18 @@ function renderCards() {
   const searchVal = document.getElementById("paySearch").value.toLowerCase().trim();
   const filterVal = document.getElementById("payFilter").value;
 
-  const filtered = allPayments.filter(p => {
+  // Add this filter so cancelled bookings never show on payments page
+const filtered = allPayments.filter(p => {
+    if (p.booking_status === "Cancelled") return false; // ← add this line
     if (filterVal !== "all" && p.payment_status !== filterVal) return false;
     if (searchVal) {
-      const name = (p.name            || "").toLowerCase();
-      const ref  = (p.gcash_reference || "").toLowerCase();
-      const tick = (p.ticket_number   || "").toLowerCase();
-      if (!name.includes(searchVal) && !ref.includes(searchVal) && !tick.includes(searchVal)) return false;
+        const name = (p.name            || "").toLowerCase();
+        const ref  = (p.gcash_reference || "").toLowerCase();
+        const tick = (p.ticket_number   || "").toLowerCase();
+        if (!name.includes(searchVal) && !ref.includes(searchVal) && !tick.includes(searchVal)) return false;
     }
     return true;
-  });
+});
 
   grid.innerHTML = "";
 
@@ -545,9 +589,14 @@ function buildCard(p) {
       </div>`;
   }
 
-  const confirmBtn = isConfirmed
+ const isApproved  = p.booking_status === "Approved";
+const confirmBtn  = isConfirmed
     ? `<button class="pay-btn confirm" disabled>✓ Confirmed</button>`
-    : `<button class="pay-btn confirm" data-id="${p.id}">Confirm Payment</button>`;
+    : isApproved
+        ? `<button class="pay-btn confirm" data-id="${p.id}">Confirm Payment</button>`
+        : `<button class="pay-btn confirm" disabled title="Approve this booking from the Admin Dashboard first">
+                Not Approved Yet
+           </button>`;
 
   const proofBtn = p.proof_path
     ? `<button class="pay-btn view-proof" data-src="${esc(p.proof_path)}" data-name="${esc(p.name)}">🔍 View Proof</button>`
@@ -651,25 +700,25 @@ document.getElementById("paymentGrid").addEventListener("click", function(e) {
 
 // ── CONFIRM PAYMENT ───────────────────────────────────
 async function confirmPayment(id) {
-  if (!confirm("Confirm this GCash payment? The booking will also be approved.")) return;
-  try {
-    const res  = await fetch("payment_admin.php?action=confirm", {
-      method:  "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    `id=${id}`
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast(" Payment confirmed and booking approved!", "success");
-      fetchPayments();
-    } else {
-      showToast("❌ " + (data.message || "Failed to confirm."), "error");
+    if (!confirm("Confirm this GCash payment? The booking will also be marked as completed.")) return;
+    try {
+        const res  = await fetch("payment_admin.php?action=confirm", {
+            method:  "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body:    `id=${id}`
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(" Payment confirmed and booking completed!", "success");
+            fetchPayments();
+        } else {
+            // ✅ Shows the "must be Approved first" message clearly
+            showToast(data.message || " Failed to confirm.", "error");
+        }
+    } catch (err) {
+        showToast(" Network error. Try again.", "error");
     }
-  } catch (err) {
-    showToast("❌ Network error. Try again.", "error");
-  }
 }
-
 // ── MODAL ─────────────────────────────────────────────
 function openModal(src, name) {
   const img   = document.getElementById("modalImg");
@@ -708,6 +757,7 @@ function showToast(msg, type = "success") {
 // ── INIT ──────────────────────────────────────────────
 fetchPayments();
 autoRefreshId = setInterval(fetchPayments, 60000);
+
 
 
 
