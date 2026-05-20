@@ -62,25 +62,105 @@ body {
   padding: 14px 35px;
 }
 
-.logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
-.logo img { width: 55px; height: auto; border-radius: 12px; }
-.logo-text { display: flex; flex-direction: column; justify-content: center; }
-.logo-text h2 { color: #283618; font-family: "Caveat", cursive; font-size: 2.4rem; font-weight: 700; line-height: 1.1; }
-.logo-text span { font-family: "Poppins", sans-serif; font-size: 0.7rem; letter-spacing: 4px; color: #bc6c25; font-weight: 600; display: block; margin-top: -5px; text-transform: uppercase; }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+.logo img {
+  width: 55px;
+  height: auto;
+  border-radius: 12px;
+}
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.logo-text h2 {
+  color: #283618;
+  font-family: "Caveat", cursive;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.logo-text span {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: #bc6c25;
+  font-weight: 600;
+  display: block;
+  margin-top: -5px;
+  text-transform: uppercase;
+}
 
-.navbar { display: flex; align-items: center; gap: 10px; }
-.navbar a { text-decoration: none; color: #283618; font-size: 0.95rem; font-weight: 600; padding: 12px 18px; border-radius: 14px; transition: 0.3s ease; }
-.navbar a:hover { background: rgba(255, 255, 255, 0.45); color: #bc6c25; transform: translateY(-2px); }
-.navbar a.active { background: linear-gradient(135deg, #606c38, #4f5d2f); color: white;  }
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.navbar a {
+  text-decoration: none;
+  color: #283618;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 14px;
+  transition: 0.3s ease;
+}
+.navbar a:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #bc6c25;
+  transform: translateY(-2px);
+}
+.navbar a.active {
+  background: linear-gradient(135deg, #606c38, #4f5d2f);
+  color: white;
+}
 
-.login-btn { text-decoration: none; background: linear-gradient(135deg, #dda15e, #bc6c25); color: white; padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 0.95rem; ; transition: 0.3s ease; }
-.login-btn:hover { transform: translateY(-3px) scale(1.03); }
-.menu-toggle { display: none; font-size: 1.8rem; color: #283618; cursor: pointer; }
+.login-btn {
+  text-decoration: none;
+  background: linear-gradient(135deg, #dda15e, #bc6c25);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: 0.3s ease;
+}
+.login-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+.menu-toggle {
+  display: none;
+  font-size: 1.8rem;
+  color: #283618;
+  cursor: pointer;
+}
 
 /* SOCIALS */
-.socials { position: fixed; left: 20px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
-.socials img { width: 58px; height: 58px; border-radius: 50%; background: #fff; padding: 10px; }
-.socials img:hover { transform: translateY(-4px); }
+.socials {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 1000;
+}
+.socials img {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 10px;
+}
+.socials img:hover {
+  transform: translateY(-4px);
+}
 
 /* ========================================= */
 /* ABOUT HERO SECTION (Matches Store Hero) */
@@ -103,8 +183,6 @@ body {
     url("../IMAGES/Slide1.png");
   background-size: cover;
   background-position: center;
-  
-
 }
 
 .about-hero-content {
@@ -127,7 +205,6 @@ body {
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.4);
 
-  
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 30px;
@@ -267,7 +344,7 @@ body {
 footer {
   width: 100%;
 
-   background:#283618; 
+  background: #283618;
 
   padding: 56px 80px 36px;
 
@@ -277,22 +354,6 @@ footer {
 
   position: relative;
   overflow: hidden;
-}
-
-/* Glow Circle */
-footer::before {
-  content: "";
-  position: absolute;
-
-  width: 260px;
-  height: 260px;
-
-  background: rgba(255, 255, 255, 0.05);
-
-  border-radius: 50%;
-
-  top: -100px;
-  right: -100px;
 }
 
 /* TOP */
